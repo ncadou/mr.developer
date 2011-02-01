@@ -18,9 +18,12 @@ class MercurialWorkingCopy(common.BaseWorkingCopy):
         self.output((logger.info, 'Cloned %r with mercurial.' % name))
         env = dict(os.environ)
         env.pop('PYTHONPATH', None)
-        cmd = subprocess.Popen(
-            ['hg', 'clone', '--quiet', '--noninteractive', url, path],
-            env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        args = ['hg', 'clone', '--quiet', '--noninteractive', url, path]
+        rev = self.source.get('revision', self.source.get('rev'))
+        if rev is not None and not rev.startswith('>'):
+            args.extend(['-r', rev])
+        cmd = subprocess.Popen(args, env=env, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
         stdout, stderr = cmd.communicate()
         if cmd.returncode != 0:
             raise MercurialError(
@@ -34,8 +37,12 @@ class MercurialWorkingCopy(common.BaseWorkingCopy):
         self.output((logger.info, 'Updated %r with mercurial.' % name))
         env = dict(os.environ)
         env.pop('PYTHONPATH', None)
-        cmd = subprocess.Popen(['hg', 'pull', '-u'], cwd=path,
-            env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        args = ['hg', 'pull', '-u']
+        rev = self.source.get('revision', self.source.get('rev'))
+        if rev is not None and not rev.startswith('>'):
+            args.extend(['-r', rev])
+        cmd = subprocess.Popen(args, cwd=path, env=env, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE)
         stdout, stderr = cmd.communicate()
         if cmd.returncode != 0:
             raise MercurialError(
